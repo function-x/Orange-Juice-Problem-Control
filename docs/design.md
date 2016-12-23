@@ -3,11 +3,12 @@
 ## TODO list
 * ~~design interactionsinteractions API.~~(abandoned)
 * ~~design problem structure.~~
-* design file system structure.(core job to do)
+* ~~design file system structure.(core job to do)~~
 * suport file layout
-    * json
+    * ~~json~~
     * html
     * markdown
+* git submodule support
 
 ## modeling of the problem:
 > with any other object we keep the job for API server.

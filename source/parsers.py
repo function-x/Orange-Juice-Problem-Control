@@ -2,7 +2,7 @@
 # @Author: Michael
 # @Date:   2016-12-24 02:09:34
 # @Last Modified by:   Michael
-# @Last Modified time: 2016-12-24 03:27:35
+# @Last Modified time: 2016-12-24 03:34:24
 import json
 from .structures import problem_sturcture
 from .exceptions import InvalidFileFormatError
@@ -14,7 +14,6 @@ class BasePaser(object):
     """
     def __init__(self):
         super(BasePaser, self).__init__()
-        self.file = None
         self.doneFlag = False
         self.problem = problem_sturcture
 
