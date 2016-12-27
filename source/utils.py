@@ -2,7 +2,7 @@
 # @Author: Michael
 # @Date:   2016-12-24 03:34:39
 # @Last Modified by:   Michael
-# @Last Modified time: 2016-12-27 16:18:25
+# @Last Modified time: 2016-12-27 19:18:15
 import git
 import json
 import os
@@ -15,26 +15,42 @@ class GitEngine(object):
     def __init__(self, root):
         super(GitEngine, self).__init__()
         self.root = root
-        self.ownerRepos = {}  # 这个数据结构用于保存(submodule, last push binsha)键值对，日后我会把他保存在文件里
+        self.commitTable = {}  # 这个数据结构用于保存(submodule, last push binsha)键值对，日后我会把他保存在文件里
+        self.ownerRepo = None
         try:
             self.problemHub = git.Repo(root)
             self.readLastCommitBinsha()
         except git.InvalidGitRepositoryError:
-            self.setup()
+            self.problemHub = self.setup()
+        except FileNotFoundError:
+            self.commitTable = {}
         # self.acrot = git.Actor(author, authorEmaill)
 
-    def updateOwners(self):
-        if self.problemHub is None:
-            raise UnboundLocalError("didn't init repo.")
-        else:
-            self.owners = self.problemHub.submodules
+    def __del__(self):
+        self.genCurrCommitBinsha()
 
-    def setup(self):
-        self.problemHub = git.Repo.init()
+    # def __str__(self):
+
+    @staticmethod
+    def setup():
+        git.Repo.init()
+
+    def _setOwnerRepo(self, owner):
+        self.ownerRepo = self.problemHub.submodule(owner)
+
+    def _addAndCommit(self, repo, commitMessage):
+        repo.git.add(u=True)
+        repo.index.commit(commitMessage)
+
+    def _getLastCommit(self, owner):
+        self._setOwnerRepo(owner)
+        for commit in self.ownerRepo.iter_commits():
+            if self.commitTable[owner] == commit.binsha:
+                return commit
 
     def readLastCommitBinsha(self):
         with open(os.path.join(self.root, 'LastCommitBinsha.json'), 'r') as fLastCommitBinsha:
-            self.ownerRepos = json.loads(fLastCommitBinsha.read())
+            self.commitTable = json.loads(fLastCommitBinsha.read())
 
     def genCurrCommitBinsha(self):
         ownerRepos = {}
@@ -46,20 +62,34 @@ class GitEngine(object):
     def addOnwerRepo(self, owner, url):
         self.problemHub.create_submodule(owner, owner, url=url)
 
-    def update(self, owner):
-        ownerRepo = self.problemHub.submodule(owner)
-        ownerRepo.update(to_latest_revision=True)
-        self.problemHub.git.add(u=True)
-        self.problemHub.index.commit("%s from %s is updated." % owner, ownerRepo.url)
+    def updateOnwerRepo(self, owner):
+        self._setOwnerRepo(owner)
+        self.ownerRepo.update(to_latest_revision=True)
+        self._addAndCommit(self.problemHub, "%s from %s is updated." % owner, self.ownerRepo.url)
 
-    def updateAll(self):
+    def updateAllOnwerRepo(self):
         for ownerRepo in self.problemHub.submodules:
             ownerRepo.update(to_latest_revision=True)
 
-        self.problemHub.git.add(u=True)
-        self.problemHub.index.commit("all are updated.")
+        self._addAndCommit(self.problemHub, "all are updated.")
+
+    def removeOnwerRepo(self, owner):
+        self._setOwnerRepo(owner)
+        try:
+            self.ownerRepo.remove(configuration=True)
+        except ValueError as e:
+            print(e)
 
     def analyzeDiff(self, owner):
-        ownerRepo = self.problemHub.submodule(owner)
-        for commit in ownerRepo.iter_commits():
-            pass
+        commit = self._getLastCommit(owner)
+        diffs = commit.diff(self.ownerRepo.head.commit)  # 有可能用户会执行mv A B这样的命令，会无端增加操作数量，此处有优化空间
+        changedFiles = {}
+        changedFiles['owner'] = owner
+        for diff in diffs:
+            if diff.change_type == 'D':
+                changedFiles['D'] = diff.b_path
+            elif diff.change_type == 'A' or 'M':
+                changedFiles['A'] = diff.b_path
+            else:
+                pass
+        return changedFiles
