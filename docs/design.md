@@ -1,7 +1,7 @@
 # A design for Problem Hub System of Project: Orange-Juice
 
 ## TODO list
-* ~~design interactionsinteractions API.~~(abandoned)
+* ~~design interactions API.~~(abandoned)
 * ~~design problem structure.~~
 * ~~design file system structure.(core job to do)~~
 * suport file layout
