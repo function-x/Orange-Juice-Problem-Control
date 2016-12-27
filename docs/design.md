@@ -1,14 +1,23 @@
 # A design for Problem Hub System of Project: Orange-Juice
 
 ## TODO list
+### basic
 * ~~design interactions API.~~
 * ~~design problem structure.~~
 * ~~design file system structure.(core job to do)~~
-* suport file layout
+* suport file layout.
     * ~~json~~
     * html
     * markdown
-* git submodule support
+* git submodule support.
+* httpListner provide APIserver API.
+* payload poster.
+* manage methods or class.
+
+### enhance
+* consider performance.
+    * multi-thread situation.
+    * optimize.
 
 ## modeling of the problem:
 > with any other object we keep the job for API server.
