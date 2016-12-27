@@ -2,7 +2,7 @@
 # @Author: Michael
 # @Date:   2016-12-24 03:34:39
 # @Last Modified by:   Michael
-# @Last Modified time: 2016-12-27 19:18:15
+# @Last Modified time: 2016-12-27 20:11:09
 import git
 import json
 import os
@@ -15,7 +15,7 @@ class GitEngine(object):
     def __init__(self, root):
         super(GitEngine, self).__init__()
         self.root = root
-        self.commitTable = {}  # 这个数据结构用于保存(submodule, last push binsha)键值对，日后我会把他保存在文件里
+        self.commitTable = {}  # 这个数据结构用于保存(submodule, last push binsha)键值对
         self.ownerRepo = None
         try:
             self.problemHub = git.Repo(root)

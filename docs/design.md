@@ -1,7 +1,7 @@
 # A design for Problem Hub System of Project: Orange-Juice
 
 ## TODO list
-* ~~design interactions API.~~(abandoned)
+* ~~design interactions API.~~
 * ~~design problem structure.~~
 * ~~design file system structure.(core job to do)~~
 * suport file layout
@@ -57,3 +57,54 @@ problem_sturcture = {
     "lable": list
 }
 ```
+
+## API
+
+| 名称   | URL     | 方法   | 备注         |
+| ---- | ------- | ---- | ---------- |
+| 创建仓库 | /create | GET  | 需要API服务器认证 |
+| 更新仓库 | /update | GET  | 需要API服务器认证 |
+| 删除仓库 | /delete | GET  | 需要API服务器认证 |
+
+### 更新仓库
+
+请求：
+
+| 路径       | 说明   | 备注      |
+| -------- | ---- | ------- |
+| reponame | 仓库名称 | 应与用户名一致 |
+
+响应：
+
+| 路径   | 说明   | 备注   |
+| ---- | ---- | ---- |
+| code | 错误码  |      |
+
+### 创建仓库
+
+请求：
+
+| 路径       | 说明   | 备注      |
+| -------- | ---- | ------- |
+| reponame | 仓库名称 | 应与用户名一致 |
+| url      | 仓库地址 |         |
+
+响应：
+
+| 路径   | 说明   | 备注   |
+| ---- | ---- | ---- |
+| code | 错误码  |      |
+
+### 删除仓库
+
+请求：
+
+| 路径       | 说明   | 备注      |
+| -------- | ---- | ------- |
+| reponame | 仓库名称 | 应与用户名一致 |
+
+响应：
+
+| 路径   | 说明   | 备注   |
+| ---- | ---- | ---- |
+| code | 错误码  |      |
