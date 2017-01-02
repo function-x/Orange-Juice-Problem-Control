@@ -2,10 +2,9 @@
 # @Author: Michael
 # @Date:   2016-12-27 19:21:52
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-01-02 11:55:44
+# @Last Modified time: 2017-01-02 15:53:08
 from .utils import fileLayoutJudge, lock, walker
 from .parsers import JsonPaser
-import requests
 
 
 class ManageEngine(object):

@@ -2,13 +2,14 @@
 # @Author: Michael
 # @Date:   2016-12-24 03:34:39
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-01-02 11:42:24
+# @Last Modified time: 2017-01-02 17:37:21
 import git
-import json
+import pickle
 import os
 import re
 import threading
 from collections import defaultdict
+from .exceptions import ResorceNotFoundError
 
 
 def fileLayoutJudge(filename):
@@ -40,7 +41,7 @@ class GitManager(object):
     """
     @brief      Drive of git.
     """
-    def __init__(self, root):
+    def __init__(self, root, testMode=False):
         super(GitManager, self).__init__()
         self.root = root
         self.commitTable = {}  # 这个数据结构用于保存(submodule, last push binsha)键值对
@@ -49,22 +50,35 @@ class GitManager(object):
             self.problemHub = git.Repo(root)
             self.readLastCommitBinsha()
         except git.InvalidGitRepositoryError:
-            self.problemHub = self.setup()
+            if not testMode:
+                self.problemHub = self.setup()
+            else:
+                pass
         except FileNotFoundError:
             self.commitTable = {}
         # self.acrot = git.Actor(author, authorEmaill)
 
-    def __del__(self):
-        self.genCurrCommitBinsha()
-
     # def __str__(self):
 
-    @staticmethod
-    def setup():
-        git.Repo.init()
+    def setup(self, root=None):
+        if root is None:
+            self.problemHub = git.Repo.init(self.root)
+        else:
+            self.root = root
+            self.problemHub = git.Repo.init(self.root)
+
+    def lookup(self, root=None):
+        if root is None:
+            self.problemHub = git.Repo(self.root)
+        else:
+            self.root = root
+            self.problemHub = git.Repo(self.root)
 
     def _setOwnerRepo(self, owner):
-        self.ownerRepo = self.problemHub.submodule(owner)
+        try:
+            self.ownerRepo = self.problemHub.submodule(owner)
+        except ValueError as e:
+            raise ResorceNotFoundError(e)
 
     def _addAndCommit(self, repo, commitMessage):
         repo.git.add(u=True)
@@ -77,26 +91,36 @@ class GitManager(object):
                 return commit
 
     def readLastCommitBinsha(self):
-        with open(os.path.join(self.root, 'LastCommitBinsha.json'), 'r') as fLastCommitBinsha:
-            self.commitTable = json.loads(fLastCommitBinsha.read())
+        with open(os.path.join(self.root, 'LastCommitBinsha'), 'rb') as fLastCommitBinsha:
+            self.commitTable = pickle.loads(fLastCommitBinsha.read())
 
     def genCurrCommitBinsha(self):
+        # separate each repo
         ownerRepos = {}
         for ownerRepo in self.problemHub.submodules:
             ownerRepos[ownerRepo.name] = ownerRepo.module().head.commit.binsha
-        with open(os.path.join(self.root, 'LastCommitBinsha.json'), 'w') as fLastCommitBinsha:
-            fLastCommitBinsha.write(json.dumps(ownerRepos))
+        with open(os.path.join(self.root, 'LastCommitBinsha'), 'wb') as fLastCommitBinsha:
+            fLastCommitBinsha.write(pickle.dumps(ownerRepos))
 
     def addOnwerRepo(self, owner, url):
+        try:
+            for ownerRepo in self.problemHub.submodules:
+                if owner == ownerRepo.name:
+                    return
+        except git.BadName:
+            print('no submodule')
         self.problemHub.create_submodule(owner, owner, url=url)
-        self._addAndCommit(self.problemHub, "owner %s's repo from %s is created." % owner, url)
+        self._addAndCommit(self.problemHub, "owner %s's repo from %s is created." % (owner, url))
 
     def updateOnwerRepo(self, owner):
+        # separate each repo
+        self.genCurrCommitBinsha()
         self._setOwnerRepo(owner)
         self.ownerRepo.update(to_latest_revision=True)
-        self._addAndCommit(self.problemHub, "%s from %s is updated." % owner, self.ownerRepo.url)
+        self._addAndCommit(self.problemHub, "%s from %s is updated." % (owner, self.ownerRepo.url))
 
     def updateAllOnwerRepo(self):
+        self.genCurrCommitBinsha()
         for ownerRepo in self.problemHub.submodules:
             ownerRepo.update(to_latest_revision=True)
 
@@ -128,4 +152,4 @@ class GitManager(object):
 
 
 walker = DirWalker()
-lock = threading.lock()
+lock = threading.Lock()
