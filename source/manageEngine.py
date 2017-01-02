@@ -2,7 +2,7 @@
 # @Author: Michael
 # @Date:   2016-12-27 19:21:52
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-01-02 18:02:43
+# @Last Modified time: 2017-01-02 18:05:22
 from .utils import fileLayoutJudge, lock, walker
 from .parsers import JsonPaser
 
@@ -41,4 +41,3 @@ class ManageEngine(object):
                 self.parsers[fileLayoutJudge(path)].parse(path, owner, packagePrev)
             else:
                 self.parsers[fileLayoutJudge(path)].parse(path)
->>>>>>> dev
