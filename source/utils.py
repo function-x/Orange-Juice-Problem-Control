@@ -2,11 +2,12 @@
 # @Author: Michael
 # @Date:   2016-12-24 03:34:39
 # @Last Modified by:   Michael
-# @Last Modified time: 2016-12-28 04:51:17
+# @Last Modified time: 2017-01-02 11:42:24
 import git
 import json
 import os
 import re
+import threading
 from collections import defaultdict
 
 
@@ -22,9 +23,10 @@ class DirWalker(object):
         super(DirWalker, self).__init__()
         self.fileList = []
 
-    def appendFiles(self, files):
-        self.fileList += files
-        self.fileList = sorted(set(self.fileList), key=self.fileList.index)
+    def appendFiles(self, files, lock):
+        with lock:
+            self.fileList += files
+            self.fileList = sorted(set(self.fileList), key=self.fileList.index)
 
     def analysePacakge(self, index):
         return re.compile(r'.*?/').findall(self.fileList[index])[-1][:-1]
@@ -123,3 +125,7 @@ class GitManager(object):
                 changedFiles['A'].append(os.path.join(self.problemHub.working_dir, os.path.join(owner, diff.b_path)))
                 # 此处可优化
         return changedFiles
+
+
+walker = DirWalker()
+lock = threading.lock()
