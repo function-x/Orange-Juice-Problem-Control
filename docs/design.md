@@ -6,18 +6,23 @@
 * ~~design problem structure.~~
 * ~~design file system structure.(core job to do)~~
 * suport file layout.
-    * ~~json~~
-    * html
-    * markdown
+    + ~~json~~
+    + html
+    + markdown
 * git submodule support.
 * httpListner provide APIserver API.
 * payload poster.
 * manage methods or class.
+* test module.
 
 ### enhance
 * consider performance.
-    * multi-thread situation.
-    * optimize.
+    + multi-thread situation.
+        - pasers
+        - ~~walker~~
+        - git manager
+        - main manager
+    + optimize.
 
 ## modeling of the problem:
 > with any other object we keep the job for API server.

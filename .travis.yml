@@ -1,0 +1,18 @@
+lauguage: python
+
+python:
+  - 3.5
+
+sudo: required
+ 
+dist: trusty
+
+before_install:
+  - export PYTHONPATH=/usr/lib/python3/dist-packages:/usr/local/lib/python3.5/dist-packages
+  - sudo apt-get install python3-pip
+
+install:
+  - sudo pip3 install -r requirements.txt
+
+script: 
+  - py.test 
