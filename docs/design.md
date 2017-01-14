@@ -76,9 +76,9 @@ problem_sturcture = {
 
 | 名称   | URL     | 方法   | 备注         |
 | ---- | ------- | ---- | ---------- |
-| 创建仓库 | /create | GET  | 需要API服务器认证 |
-| 更新仓库 | /update | GET  | 需要API服务器认证 |
-| 删除仓库 | /delete | GET  | 需要API服务器认证 |
+| 创建仓库 | /create | POST    | 需要API服务器认证 |
+| 更新仓库 | /update | PUT     | 需要API服务器认证 |
+| 删除仓库 | /delete | DELETE  | 需要API服务器认证 |
 
 ### 更新仓库
 

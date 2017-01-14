@@ -2,7 +2,7 @@
 # @Author: Michael
 # @Date:   2016-12-24 03:34:39
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-01-02 17:37:21
+# @Last Modified time: 2017-01-14 18:46:37
 import git
 import pickle
 import os
@@ -135,6 +135,18 @@ class GitManager(object):
         self._addAndCommit(self.problemHub, "owner %s's repo is deleted." % owner)
 
     def analyzeDiff(self, owner):
+        """
+        @brief      Analyse diff to generate payload and access API.
+                    there is one thing to know:
+                    git will treat those files who has been modified and
+                    renamed as Deleted and Added. so for those files who
+                    just renamed doesn't need to track.
+
+        @param      self   The object
+        @param      owner  The owner
+
+        @return     a dict of changed files
+        """
         commit = self._getLastCommit(owner)
         diffs = commit.diff(self.ownerRepo.head.commit)  # 有可能用户会执行mv A B这样的命令，会无端增加操作数量，此处有优化空间
         changedFiles = defaultdict(list)
@@ -142,12 +154,13 @@ class GitManager(object):
         for diff in diffs:
             if diff.change_type == 'D':
                 changedFiles['D'].append(os.path.join(self.problemHub.working_dir, os.path.join(owner, diff.b_path)))
-            elif diff.change_type == 'A' or 'M':
+            elif diff.change_type == 'A':
                 changedFiles['A'].append(os.path.join(self.problemHub.working_dir, os.path.join(owner, diff.b_path)))
+            elif diff.change_type == 'M':
+                changedFiles['M'].append(os.path.join(self.problemHub.working_dir, os.path.join(owner, diff.b_path)))
             else:
-                changedFiles['D'].append(os.path.join(self.problemHub.working_dir, os.path.join(owner, diff.b_path)))
-                changedFiles['A'].append(os.path.join(self.problemHub.working_dir, os.path.join(owner, diff.b_path)))
-                # 此处可优化
+                pass
+                # 此处可优化?
         return changedFiles
 
 

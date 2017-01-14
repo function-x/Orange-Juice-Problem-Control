@@ -2,7 +2,7 @@
 # @Author: Michael
 # @Date:   2016-12-27 19:21:52
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-01-02 18:05:22
+# @Last Modified time: 2017-01-14 18:55:21
 from .utils import fileLayoutJudge, lock, walker
 from .parsers import JsonPaser
 
@@ -13,9 +13,9 @@ class ManageEngine(object):
     """
     def __init__(self):
         super(ManageEngine, self).__init__()
-        self.parsers = {}
+        self.parsers = dict()
         self.initParsers()
-        self.payload = {}
+        self.payload = list()
 
     def initParsers(self):
         self.parsers['json'] = JsonPaser()
