@@ -9,13 +9,16 @@
     + ~~json~~
     + html
     + markdown
-* git submodule support.
-* httpListner provide APIserver API.
+* ~~git submodule support.~~
+* ~~httpListner provide APIserver API.~~
 * payload poster.
 * manage methods or class.
 * test module.
 
 ### enhance
+
++ register as a Github APP.
+
 * consider performance.
     + multi-thread situation.
         - pasers
@@ -74,11 +77,11 @@ problem_sturcture = {
 
 ## API
 
-| 名称   | URL     | 方法   | 备注         |
-| ---- | ------- | ---- | ---------- |
-| 创建仓库 | /create | POST    | 需要API服务器认证 |
-| 更新仓库 | /update | PUT     | 需要API服务器认证 |
-| 删除仓库 | /delete | DELETE  | 需要API服务器认证 |
+| 名称   | URL     | 方法     | 备注         |
+| ---- | ------- | ------ | ---------- |
+| 引入仓库 | /import | POST   | 需要API服务器认证 |
+| 更新仓库 | /update | PUT    | 需要API服务器认证 |
+| 分离   | /detach | DELETE | 需要API服务器认证 |
 
 ### 更新仓库
 
