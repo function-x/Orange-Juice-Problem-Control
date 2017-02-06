@@ -2,18 +2,30 @@
 # @Author: Michael
 # @Date:   2016-12-24 03:34:39
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-01-14 19:46:12
+# @Last Modified time: 2017-02-06 22:42:40
 import git
-import pickle
 import os
 import re
 import threading
+import json
+from hashlib import sha1
 from collections import defaultdict
 from .exceptions import ResorceNotFoundError
 
 
 def fileLayoutJudge(filename):
     return os.path.splitext()[-1].replace('.', '')
+
+
+def getFileHexsha(filename):
+    m = sha1()
+    with open(filename, 'rb') as f:
+        while True:
+            data = f.read(16 * 1024 * 1024)
+            if not data:
+                break
+            m.update(data)
+    return m.hexdigest()
 
 
 class DirWalker(object):
@@ -44,11 +56,11 @@ class GitManager(object):
     def __init__(self, root, testMode=False):
         super(GitManager, self).__init__()
         self.root = root
-        self.commitTable = {}  # 这个数据结构用于保存(submodule, last push binsha)键值对
+        self.commitTable = {}  # 这个数据结构用于保存(submodule, last push hexsha)键值对
         self.ownerRepo = None
         try:
             self.problemHub = git.Repo(root)
-            self.readLastCommitBinsha()
+            self.readLastCommitHexsha()
         except git.InvalidGitRepositoryError:
             if not testMode:
                 self.problemHub = self.setup()
@@ -87,20 +99,20 @@ class GitManager(object):
     def _getLastCommit(self, owner):
         self._setOwnerRepo(owner)
         for commit in self.ownerRepo.iter_commits():
-            if self.commitTable[owner] == commit.binsha:
+            if self.commitTable[owner] == commit.hexsha:
                 return commit
 
-    def readLastCommitBinsha(self):
-        with open(os.path.join(self.root, 'LastCommitBinsha'), 'rb') as fLastCommitBinsha:
-            self.commitTable = pickle.loads(fLastCommitBinsha.read())
+    def readLastCommitHexsha(self):
+        with open(os.path.join(self.root, 'LastCommitHexsha.json'), 'r') as fLastCommitHexsha:
+            self.commitTable = json.loads(fLastCommitHexsha.read())
 
-    def genCurrCommitBinsha(self):
+    def genCurrCommitHexsha(self):
         # separate each repo
         ownerRepos = {}
         for ownerRepo in self.problemHub.submodules:
-            ownerRepos[ownerRepo.name] = ownerRepo.module().head.commit.binsha
-        with open(os.path.join(self.root, 'LastCommitBinsha'), 'wb') as fLastCommitBinsha:
-            fLastCommitBinsha.write(pickle.dumps(ownerRepos))
+            ownerRepos[ownerRepo.name] = ownerRepo.module().head.commit.hexsha
+        with open(os.path.join(self.root, 'LastCommitHexsha.json'), 'w') as fLastCommitHexsha:
+            fLastCommitHexsha.write(json.dumps(ownerRepos))
 
     def addOnwerRepo(self, owner, url):
         try:
@@ -114,13 +126,13 @@ class GitManager(object):
 
     def updateOnwerRepo(self, owner):
         # separate each repo
-        self.genCurrCommitBinsha()
+        self.genCurrCommitHexsha()
         self._setOwnerRepo(owner)
         self.ownerRepo.update(to_latest_revision=True)
         self._addAndCommit(self.problemHub, "%s from %s is updated." % (owner, self.ownerRepo.url))
 
     def updateAllOnwerRepo(self):
-        self.genCurrCommitBinsha()
+        self.genCurrCommitHexsha()
         for ownerRepo in self.problemHub.submodules:
             ownerRepo.update(to_latest_revision=True)
 
@@ -148,9 +160,8 @@ class GitManager(object):
         @return     a dict of changed files
         """
         commit = self._getLastCommit(owner)
-        diffs = commit.diff(self.ownerRepo.head.commit)  # 有可能用户会执行mv A B这样的命令，会无端增加操作数量，此处有优化空间
+        diffs = commit.diff(self.ownerRepo.head.commit)
         changedFiles = defaultdict(list)
-        changedFiles['owner'] = owner
         for diff in diffs:
             if diff.change_type == 'D':
                 changedFiles['D'].append(os.path.join(self.problemHub.working_dir, os.path.join(owner, diff.b_path)))
@@ -160,7 +171,7 @@ class GitManager(object):
                 changedFiles['M'].append(os.path.join(self.problemHub.working_dir, os.path.join(owner, diff.b_path)))
             else:
                 pass
-                # 此处可优化?
+                # 文件目录结构变动不影响数据库条目
         return changedFiles
 
 
