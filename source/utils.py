@@ -2,13 +2,12 @@
 # @Author: Michael
 # @Date:   2016-12-24 03:34:39
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-02-06 22:42:40
+# @Last Modified time: 2017-02-07 01:59:37
 import git
 import os
 import re
 import threading
 import json
-from hashlib import sha1
 from collections import defaultdict
 from .exceptions import ResorceNotFoundError
 
@@ -17,15 +16,52 @@ def fileLayoutJudge(filename):
     return os.path.splitext()[-1].replace('.', '')
 
 
-def getFileHexsha(filename):
-    m = sha1()
-    with open(filename, 'rb') as f:
-        while True:
-            data = f.read(16 * 1024 * 1024)
-            if not data:
-                break
-            m.update(data)
-    return m.hexdigest()
+def getProblemId(problemPath, root):
+    """
+    @brief      Gets the problemId.
+
+    @param      problemPath  The problem path
+    @param      root         The root
+
+    @return     The problem identifier.
+    """
+    problemId = None
+    with open(os.path.join(root, 'ProblemPath_Id.json'), 'r') as fpath_Id:
+        path_id = json.loads(fpath_Id.read())
+        problemId = path_id.get(problemPath)
+    return problemId
+
+
+def updateProblemId(problemPath, problemId, root):
+    """
+    @brief      update the problemId.
+
+    @param      problemPath  The problem path
+    @param      problemId    The problem identifier
+    @param      root         The root path
+    """
+    path_id = None
+    with open(os.path.join(root, 'ProblemPath_Id.json'), 'r+') as fpath_Id:
+        path_id = json.loads(fpath_Id.read())
+        path_id[problemPath] = problemId
+        fpath_Id.seek(0)
+        fpath_Id.truncate()
+        fpath_Id.write(path_id)
+
+
+def updateProblemPath(oldPath, newPath, root):
+    """
+    @brief      update the problem path when problem file's path changed.
+
+    @param      oldPath  The old path
+    @param      newPath  The new path
+    @param      root     The root path
+    """
+    with open(os.path.join(root, 'ProblemPath_Id.json'), 'r+') as fpath_Id:
+        path_id = json.loads(fpath_Id.read())
+        problemId = path_id.get(oldPath)
+        del path_id[oldPath]
+        path_id[newPath] = problemId
 
 
 class DirWalker(object):
@@ -35,18 +71,21 @@ class DirWalker(object):
     def __init__(self):
         super(DirWalker, self).__init__()
         self.fileList = []
+        self.lock = threading.Lock()
 
-    def appendFiles(self, files, lock):
-        with lock:
+    def appendFiles(self, files):
+        with self.lock:
             self.fileList += files
             self.fileList = sorted(set(self.fileList), key=self.fileList.index)
 
-    def analysePacakge(self, index):
-        return re.compile(r'.*?/').findall(self.fileList[index])[-1][:-1]
+    def analysePacakge(self, path):
+        return re.compile(r'.*?/').findall(path)[-1][:-1]
 
-    def walk(self, index=0):
+    def walk(self):
+        index = 0
         while self.fileList:
-            yield self.fileList.pop(index), self.analysePacakge(index)
+            path = self.fileList.pop(index)
+            yield path, self.analysePacakge(path)
 
 
 class GitManager(object):
@@ -170,10 +209,7 @@ class GitManager(object):
             elif diff.change_type == 'M':
                 changedFiles['M'].append(os.path.join(self.problemHub.working_dir, os.path.join(owner, diff.b_path)))
             else:
-                pass
+                updateProblemPath(os.path.join(owner, diff.a_path), os.path.join(owner, diff.b_path), self.problemHub.working_dir)
+                # Exceptions!!!!!!!!!!
                 # 文件目录结构变动不影响数据库条目
         return changedFiles
-
-
-walker = DirWalker()
-lock = threading.Lock()
