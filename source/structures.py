@@ -2,7 +2,7 @@
 # @Author: Michael
 # @Date:   2016-12-24 03:07:31
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-02-07 21:54:20
+# @Last Modified time: 2017-02-07 22:08:19
 
 
 problem_sturcture = {
@@ -13,3 +13,10 @@ problem_sturcture = {
     "type": None,
     "lable": []
 }
+
+
+class Payload(dict):
+    """docstring for Payload(dict):"""
+    def __init__(self, arg):
+        super(Payload, self).__init__()
+        self.arg = arg
