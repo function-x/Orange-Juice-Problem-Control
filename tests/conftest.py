@@ -2,12 +2,12 @@
 # @Author: Michael
 # @Date:   2017-01-02 14:45:51
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-01-02 17:39:40
+# @Last Modified time: 2017-02-07 21:49:09
 import pytest
 import os
 import shutil
 
-from source.utils import GitManager
+from source.gitManager import GitManager
 
 
 @pytest.fixture()
