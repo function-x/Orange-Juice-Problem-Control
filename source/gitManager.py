@@ -2,7 +2,7 @@
 # @Author: Michael
 # @Date:   2017-02-07 21:46:35
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-02-07 21:48:21
+# @Last Modified time: 2017-02-08 17:09:42
 import os
 import git
 import json
@@ -15,14 +15,16 @@ class GitManager(object):
     """
     @brief      Drive of git.
     """
+
     def __init__(self, root, testMode=False):
         super(GitManager, self).__init__()
         self.root = root
         self.commitTable = {}  # 这个数据结构用于保存(submodule, last push hexsha)键值对
         self.ownerRepo = None
+        self._methods = {'create': self.addOnwerRepo, 'update': self.updateOnwerRepo, 'delete': self.removeOnwerRepo}
         try:
             self.problemHub = git.Repo(root)
-            self.readLastCommitHexsha()
+            self._readLastCommitHexsha()
         except git.InvalidGitRepositoryError:
             if not testMode:
                 self.problemHub = self.setup()
@@ -35,18 +37,12 @@ class GitManager(object):
     # def __str__(self):
 
     def setup(self, root=None):
-        if root is None:
-            self.problemHub = git.Repo.init(self.root)
-        else:
-            self.root = root
-            self.problemHub = git.Repo.init(self.root)
+        self.root = root if root is not None else self.root
+        self.problemHub = git.Repo.init(self.root)
 
     def lookup(self, root=None):
-        if root is None:
-            self.problemHub = git.Repo(self.root)
-        else:
-            self.root = root
-            self.problemHub = git.Repo(self.root)
+        self.root = root if root is not None else self.root
+        self.problemHub = git.Repo(self.root)
 
     def _setOwnerRepo(self, owner):
         try:
@@ -64,11 +60,11 @@ class GitManager(object):
             if self.commitTable[owner] == commit.hexsha:
                 return commit
 
-    def readLastCommitHexsha(self):
+    def _readLastCommitHexsha(self):
         with open(os.path.join(self.root, 'LastCommitHexsha.json'), 'r') as fLastCommitHexsha:
             self.commitTable = json.loads(fLastCommitHexsha.read())
 
-    def genCurrCommitHexsha(self):
+    def _genCurrCommitHexsha(self):
         # separate each repo
         ownerRepos = {}
         for ownerRepo in self.problemHub.submodules:
@@ -88,13 +84,13 @@ class GitManager(object):
 
     def updateOnwerRepo(self, owner):
         # separate each repo
-        self.genCurrCommitHexsha()
+        self._genCurrCommitHexsha()
         self._setOwnerRepo(owner)
         self.ownerRepo.update(to_latest_revision=True)
         self._addAndCommit(self.problemHub, "%s from %s is updated." % (owner, self.ownerRepo.url))
 
     def updateAllOnwerRepo(self):
-        self.genCurrCommitHexsha()
+        self._genCurrCommitHexsha()
         for ownerRepo in self.problemHub.submodules:
             ownerRepo.update(to_latest_revision=True)
 
@@ -107,6 +103,12 @@ class GitManager(object):
         except ValueError as e:
             print(e)
         self._addAndCommit(self.problemHub, "owner %s's repo is deleted." % owner)
+
+    def process(self, method, *args):
+        if method in tuple(self._methods.keys()):
+            self._methods[method](*args)
+        else:
+            raise KeyError('Invalid method %s' % (method))
 
     def analyzeDiff(self, owner):
         """
