@@ -2,17 +2,17 @@
 # @Author: Michael
 # @Date:   2016-12-27 19:21:52
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-02-08 18:10:35
+# @Last Modified time: 2017-02-08 18:11:59
 from .gitManager import GitManager
 from .utils import PayloadGenerator
 
 
-class ManageEngine(object):
+class Controller(object):
     """
     @brief      Class for manage engine.
     """
     def __init__(self, rootPath, method):
-        super(ManageEngine, self).__init__()
+        super(Controller, self).__init__()
         self.rootPath = rootPath
         self.method = method
 

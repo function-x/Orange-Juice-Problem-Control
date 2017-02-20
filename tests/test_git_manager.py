@@ -2,7 +2,7 @@
 # @Author: Michael
 # @Date:   2016-12-26 22:06:50
 # @Last Modified by:   Michael
-# @Last Modified time: 2017-01-02 17:34:41
+# @Last Modified time: 2017-02-08 18:23:40
 import pytest
 import git
 import os
@@ -27,3 +27,8 @@ class TestGitManager:
     def test_delete_repo(self, git_manager):
         git_manager.addOnwerRepo(TEST_OWNER, TEST_URL)
         git_manager.removeOnwerRepo(TEST_OWNER)
+
+    def test_process(self, git_manager):
+        git_manager.process('create', TEST_OWNER, TEST_URL)
+        git_manager.process('update', TEST_OWNER)
+        git_manager.process('delete', TEST_OWNER)
